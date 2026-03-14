@@ -1,6 +1,336 @@
+body {
+  background: #1b1c1c;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto;
+  color: #e5e7eb;
+}
+
+/* ---------- Layout ---------- */
+
+.app-container {
+  max-width: 1200px;
+  padding: 32px 20px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.app-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- Editor Row ---------- */
+
+.editor-row {
+  margin-bottom: 28px;
+}
+
+.pane {
+  background: #242525;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: border 0.15s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.pane:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.pane-header {
+  padding: 11px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.4px;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.pane-body {
+  padding: 16px;
+}
+
+/* ---------- Editor ---------- */
+
+.editor {
+  background: #151616;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+  min-height: 190px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95rem;
+  padding: 12px;
+  border-radius: 6px;
+  transition:
+    border 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.editor:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+/* ---------- Preview ---------- */
+
+#output {
+  min-height: 190px;
+  font-size: 1.15rem;
+  line-height: 1.9;
+  letter-spacing: 0.2px;
+}
+
+/* ---------- Buttons ---------- */
+
+.toolbar {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #2a2b2b;
+  color: #e5e7eb;
+  transition: all 0.15s ease;
+}
+
+.btn-sm:hover {
+  background: #333434;
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.btn-sm:active {
+  transform: translateY(0);
+  background: #151616;
+}
+
+.btn-sm i {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* Primary action */
+
+.btn-primary.btn-sm {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.btn-primary.btn-sm:hover {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* ---------- Emoji ---------- */
+
 .disc-emoji {
-    width: 1.375em;
-    height: 1.375em !important;
-    object-fit: contain;
-    vertical-align: middle;
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  vertical-align: -0.2em;
+}
+
+/* ---------- Autocomplete ---------- */
+
+.input-wrapper {
+  position: relative;
+}
+
+#suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+
+  background: #151616;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+
+  display: none;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 20;
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+
+.suggestion.active,
+.suggestion:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Tables ---------- */
+
+.info-section {
+  margin-top: 26px;
+}
+
+table {
+  background: #242525;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+table th {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+table td {
+  vertical-align: middle;
+}
+
+/* ---------- Keyboard Keys ---------- */
+
+kbd {
+  background: #333434;
+  padding: 4px 7px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Scrollbars ---------- */
+
+#suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+#suggestions::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+/* ---------- Toggle Switch ---------- */
+
+.toggle {
+  display: flex;
+  align-items: center;
+}
+
+.toggle input {
+  display: none;
+}
+
+.toggle label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #333434;
+  border-radius: 20px;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.15s ease;
+}
+
+.toggle label:hover .toggle-track {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+}
+
+.toggle input:checked + label:hover .toggle-track {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.55);
+}
+
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #e5e7eb;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle input:checked + label .toggle-track {
+  background: #3b82f6;
+}
+
+.toggle input:checked + label .toggle-track::after {
+  transform: translateX(16px);
+}
+
+.toggle-label {
+  user-select: none;
+}
+
+/* ---------- Caret Mirror (for autocomplete positioning) ---------- */
+
+#caretMirror {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+
+  visibility: hidden;
+
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+
+  padding: 12px;
+
+  width: calc(100% - 32px);
+}
+
+/* Suggestion popup becomes floating */
+
+#suggestions {
+  position: absolute;
+  background: #242525;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 50;
 }
