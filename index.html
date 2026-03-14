@@ -1,115 +1,202 @@
-<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/html">
-<head>
-    <meta charset="UTF-8">
-<!--    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">-->
-<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@1.1.0/dist/css/bootstrap-prefers-light.min.css" />-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@1.1.0/dist/css/bootstrap-dark.min.css" />
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link href="css/style.css" rel="stylesheet">
-    <title>Rotation Builder</title>
-</head>
-<body>
-    <div class="container px-4">
-        <div class="row">
-            <div class="col-md-12 p-3">
-                <button type="button" id="changeView" class="btn btn-secondary btn-sm" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Change view"><i class="bi bi-view-stacked"></i> View</button>
-                <a href="https://pvme.io/pvme-settings/" class="btn btn-secondary btn-sm" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Emoji List</a>
-            </div>
-        </div>
-        <div class="row">
-            <!-- removed "border bg-light"-->
-            <div id="inputContainer" class="col-md-6 p-3">
-                <textarea class="form-control" id="input" rows="4" spellcheck="false" placeholder="barge -> assault"></textarea>
-            </div>
-            <div id="outputContainer" class="col-md-6 p-3">
-                <p id="output"></p>
-                <button type="button" id="copyDiscord" class="btn btn-primary btn-sm" data-bs-trigger="focus" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="Copied to clipboard"><i class="bi bi-clipboard"></i> Copy Discord</button>
-                <button type="button" id="copyDrawIO" class="btn btn-secondary btn-sm" data-bs-trigger="focus" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="Copied to clipboard"><i class="bi bi-clipboard"></i> Copy draw.io</button>
-                <button type="button" id="exportToTxt" class="btn btn-secondary btn-sm" data-bs-trigger="focus" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="Exported file"><i class="bi bi-download"></i> Export Discord to .txt file</button>
-                <!-- <button type="button" class="btn btn-primary btn-sm" disabled><i class="bi bi-images"></i> Create PNG</button> -->
-            </div>
+    <title>PvME Rotation Builder</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@1.1.0/dist/css/bootstrap-dark.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="container app-container">
+      <header class="app-header">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <img
+            src="https://img.pvme.io/images/EPzzJe2xy6.gif"
+            alt="PVME"
+            style="
+              height: 50px;
+              width: auto;
+              pointer-events: none;
+              user-select: none;
+            "
+          />
+          <h1 class="app-title">PvME Rotation Builder</h1>
         </div>
 
-        <div class="row">
-            <div class="col-md-12 p-3">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width:50%">Input</th>
-                            <th scope="col" style="width:50%">Formatted</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>-></td>
-                            <td>→</td>
-                        </tr>
-                        <tr>
-                            <td>gbarge, greaterbarge</td>
-                            <td><img class="disc-emoji" src="https://cdn.discordapp.com/emojis/535532879250456578.png?v=1">, <img class="disc-emoji" src="https://cdn.discordapp.com/emojis/535532879250456578.png?v=1"></td>
-                        </tr>
-                        <tr>
-                            <td><:piercing:535541258538450944></td>
-                            <td><img class="disc-emoji" src="https://cdn.discordapp.com/emojis/535541258538450944.png?v=1"></td>
-                        </tr>
-                        <tr>
-                            <td>sgb, sGb, SGB</td>
-                            <td><img class="disc-emoji" src="https://cdn.discordapp.com/emojis/626466665848242186.png?v=1">, <img class="disc-emoji" src="https://cdn.discordapp.com/emojis/626466665848242186.png?v=1">, <img class="disc-emoji" src="https://cdn.discordapp.com/emojis/626466665848242186.png?v=1"></td>
-                        </tr>
-                        <tr>
-                            <td>u<strong><u>sing</u></strong> [using]</td>
-                            <td>u<img class="disc-emoji" src="https://cdn.discordapp.com/emojis/513190159261630467.png?v=1"> using</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12 p-3">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width:50%">Key</th>
-                            <th scope="col" style="width:50%">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><kbd>Tab</kbd></td>
-                            <td>Cycle through suggestions</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>Enter</kbd>, <kbd>→</kbd></td>
-                            <td>Select suggestion</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>Space</kbd>, <kbd>Backspace</kbd></td>
-                            <td>Close suggestion</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12 p-3">
-                <h4>Copy draw.io</h4>
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/LsdUi1rGqqo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
+        <div class="toolbar">
+          <button id="changeView" class="btn btn-secondary btn-sm">
+            <i class="bi bi-layout-split"></i> Toggle Layout
+          </button>
 
+          <a
+            href="https://pvme.io/pvme-settings/"
+            target="_blank"
+            class="btn btn-secondary btn-sm"
+          >
+            <i class="bi bi-box-arrow-up-right"></i> Emoji List
+          </a>
         </div>
+      </header>
+
+      <div class="row editor-row">
+        <div id="inputContainer" class="col-md-6">
+          <div class="pane">
+            <div class="pane-header">Input</div>
+
+            <div class="pane-body input-wrapper">
+              <textarea
+                id="input"
+                class="form-control editor"
+                spellcheck="false"
+                placeholder="barge -> assault -> destroy"
+              ></textarea>
+
+              <div id="caretMirror"></div>
+
+              <div class="toolbar">
+                <div class="toggle">
+                  <input type="checkbox" id="autoArrowToggle" checked />
+                  <label for="autoArrowToggle">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-label"
+                      >Toggle automatic → on suggestion</span
+                    >
+                  </label>
+                </div>
+              </div>
+
+              <div id="suggestions"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="outputContainer" class="col-md-6">
+          <div class="pane">
+            <div class="pane-header">Preview</div>
+
+            <div class="pane-body">
+              <div id="output"></div>
+
+              <div class="toolbar">
+                <button id="copyDiscord" class="btn btn-primary btn-sm">
+                  <i class="bi bi-clipboard"></i> Copy to clipboard
+                </button>
+
+                <button id="exportToTxt" class="btn btn-secondary btn-sm">
+                  <i class="bi bi-download"></i> Export as .txt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <table class="table table-md">
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Formatted</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>-></td>
+              <td>→</td>
+            </tr>
+
+            <tr>
+              <td>gbarge, greaterbarge</td>
+              <td>
+                <img
+                  class="disc-emoji"
+                  src="https://cdn.discordapp.com/emojis/535532879250456578.png?v=1"
+                />
+                <img
+                  class="disc-emoji"
+                  src="https://cdn.discordapp.com/emojis/535532879250456578.png?v=1"
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td>&lt;:piercing:535541258538450944&gt;</td>
+              <td>
+                <img
+                  class="disc-emoji"
+                  src="https://cdn.discordapp.com/emojis/535541258538450944.png?v=1"
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td>sgb / SGB</td>
+              <td>
+                <img
+                  class="disc-emoji"
+                  src="https://cdn.discordapp.com/emojis/626466665848242186.png?v=1"
+                />
+                /
+                <img
+                  class="disc-emoji"
+                  src="https://cdn.discordapp.com/emojis/626466665848242186.png?v=1"
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                u<strong><u>sing</u></strong> [using]
+              </td>
+              <td>
+                u<img
+                  class="disc-emoji"
+                  src="https://cdn.discordapp.com/emojis/513190159261630467.png?v=1"
+                />
+                using
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="table table-md">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td><kbd>↑</kbd> <kbd>↓</kbd></td>
+              <td>Cycle through suggestions</td>
+            </tr>
+
+            <tr>
+              <td><kbd>Enter</kbd> / <kbd>→</kbd> / <kbd>tab</kbd></td>
+              <td>Accept suggestion</td>
+            </tr>
+
+            <tr>
+              <td><kbd>Space</kbd></td>
+              <td>Close suggestions</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-</body>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
-    <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="js/asuggest/jquery.a-tools-1.4.1.js"></script>
-    <script src="js/asuggest/jquery.asuggest.js"></script>
+
     <script src="js/application.js"></script>
-    <script>
-        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-          return new bootstrap.Popover(popoverTriggerEl)
-        })
-    </script>
+  </body>
 </html>

@@ -1,222 +1,336 @@
-const discordEmojiRegex = new RegExp("<:([^:]{2,}):([0-9]+)>", 'i');
+const EMOJI_URL =
+  "https://raw.githubusercontent.com/pvme/pvme-settings/master/emojis/emojis_v2.json";
 
-var emojiLUT = [];
-// var emojiSuggestions = [];
+const emojiMap = new Map();
+const emojiList = [];
+const emojiById = new Map();
 
+let suggestions = [];
+let activeIndex = -1;
 
-async function rawGithubGetRequest(url) {
-    const res = await fetch(url, {
-        method: 'GET'
-    });
-    
-    if (!res.ok)
-        throw new Error(await res.text());
+const autoArrowToggle = document.getElementById("autoArrowToggle");
 
-    return res;
+const input = document.getElementById("input");
+const output = document.getElementById("output");
+const suggestionBox = document.getElementById("suggestions");
+
+let compiledDiscord = "";
+
+function escapeHTML(str) {
+  return str.replace(
+    /[&<>"]/g,
+    (a) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+      })[a],
+  );
 }
 
-async function rawGithubJSONRequest(url) {
-    const res = await rawGithubGetRequest(url);
-    return await res.json();
-}
+async function loadEmojis() {
+  const json = await (await fetch(EMOJI_URL)).json();
 
-async function setEmojiLUTAndSuggestions() {
-    const emojisJSON = await rawGithubJSONRequest('https://raw.githubusercontent.com/pvme/pvme-settings/master/emojis/emojis_v2.json');
-    let emojiSuggestions = [];
-    for (const category of emojisJSON.categories) {
-        for (const emoji of category.emojis) {
-            // skip entries in emojis_v2 that aren't actual discord emojis
-            if(!("emoji_id" in emoji)) continue;
-            const emojiFormat = `<:${emoji.id}:${emoji.emoji_id}>`;
+  for (const cat of json.categories) {
+    for (const e of cat.emojis) {
+      if (!e.emoji_id) continue;
 
-            emojiLUT.push([emoji.id, [emojiFormat]]);
-            emojiSuggestions.push(emoji.id);
+      const obj = {
+        id: String(e.emoji_id),
+        syntax: `<:${e.id}:${e.emoji_id}>`,
+        name: e.id,
+      };
 
-            if (emoji.id_aliases) {
-                for (const alias of emoji.id_aliases) {
-                    emojiLUT.push([alias, [emojiFormat]]);
-                    emojiSuggestions.push(alias);
-                }
-            }
-        }
+      emojiById.set(obj.id, obj);
+
+      addAlias(e.id, obj);
+
+      if (e.id_aliases) {
+        for (const a of e.id_aliases) addAlias(a, obj);
+      }
     }
-    emojiLUT.push(["wenspore", [`<:wenarrow:971025697046925362>`,`<:grico:787904334812807238>`,`<:deathsporearrows:900758234527301642>`]]);
-    emojiSuggestions.push("wenspore");
+  }
 
-    emojiLUT.sort( (a, b) => {
-        return b[0].length - a[0].length;
-    });
+  emojiList.push(...emojiMap.keys());
 
-    emojiSuggestions.sort( (a, b) => {
-        return a.length - b.length;
-    });
-
-    $("#input").asuggest(emojiSuggestions, {
-        'autoComplete': false,
-        'cycleOnTab': true,
-        'ignoreCase': true,
-        'endingSymbols': '',
-        'stopSuggestionKeys': [$.asuggestKeys.RETURN, $.asuggestKeys.LEFT],
-        'delimiters': '\n ' // ideally not ' ' but requires modification to asuggest
-    });
+  // longest alias first (important for substring matching)
+  emojiList.sort((a, b) => b.length - a.length);
 }
 
-function reverse(str) {
-    let reversed = "";
-    for (let i = str.length - 1; i >= 0; i--) {
-        reversed += str[i];
+function addAlias(alias, emoji) {
+  alias = alias.toLowerCase();
+
+  if (!emojiMap.has(alias)) emojiMap.set(alias, []);
+
+  emojiMap.get(alias).push(emoji);
+}
+
+function compile() {
+  let text = input.value;
+
+  text = text.replace(/->/g, "→");
+  text = text.replace(/<:([^:]+):\d+>/g, "$1");
+
+  const sections = text.split(/(\[.*?\])/);
+
+  let result = "";
+
+  for (let part of sections) {
+    if (part.startsWith("[") && part.endsWith("]")) {
+      result += escapeHTML(part.slice(1, -1));
+      continue;
     }
-    return reversed;
+
+    let segment = part;
+
+    for (const alias of emojiList) {
+      const emojis = emojiMap.get(alias);
+      if (!emojis) continue;
+
+      const regex = new RegExp(alias, "ig");
+
+      segment = segment.replace(regex, () => {
+        let out = "";
+
+        for (let i = 0; i < emojis.length; i++) {
+          const e = emojis[i];
+
+          out += "${{" + e.id + "}}";
+
+          if (i < emojis.length - 1) out += " ";
+        }
+
+        return out;
+      });
+    }
+
+    result += segment;
+  }
+
+  // ----- Build HTML preview -----
+
+  const html = result.replace(
+    /\${{(\d+)}}/g,
+    (_, id) =>
+      `<img class="disc-emoji" src="https://cdn.discordapp.com/emojis/${id}.png?v=1">`,
+  );
+
+  // ----- Build Discord output -----
+
+  const discord = result.replace(/\${{(\d+)}}/g, (_, id) => {
+    const e = emojiById.get(id);
+    return e ? e.syntax : "";
+  });
+
+  compiledDiscord = discord;
+
+  output.innerHTML = html.replace(/\n/g, "<br>");
 }
 
+function updateSuggestions() {
+  const caret = input.selectionStart;
+  const before = input.value.slice(0, caret);
+  const token = (before.match(/[A-Za-z0-9_-]+$/) || [])[0];
 
-$(document).ready(function() {
-    let textInput = document.getElementById('input');
-    let pOutput = document.getElementById('output');
-    let clipboardText = "";
-    
-    setEmojiLUTAndSuggestions();
+  if (!token) {
+    suggestionBox.style.display = "none";
+    return;
+  }
 
-    // $("#input").asuggest(emojiSuggestions, {
-    //     'autoComplete': false,
-    //     'cycleOnTab': true,
-    //     'ignoreCase': true,
-    //     'endingSymbols': '',
-    //     'stopSuggestionKeys': [$.asuggestKeys.RETURN, $.asuggestKeys.LEFT],
-    //     'delimiters': '\n ' // ideally not ' ' but requires modification to asuggest
-    // });
+  const low = token.toLowerCase();
 
-    // handle input text area changes
-    $('#input').on('input propertychange paste', function() {
-        let input = textInput.value;
-        const originalInput = input;
+  const seen = new Set();
 
-        input = input.replace(/->/g, '→');
+  suggestions = [];
 
-        // replace input text: '<:Cinderbanes:513190158355660812>' to 'Cinderbanes'
-        let match = discordEmojiRegex.exec(input);
-        while (match != null) {
-            input = input.replace(match[0], match[1]);
-            match = discordEmojiRegex.exec(input);
-        }
+  for (const alias of emojiList) {
+    if (!alias.startsWith(low) || alias === low) continue;
 
-        let output = input;
-        let outputSections = output.split(/(\[.*?\])/gi);   //split 'barge [barge]' to ['barge ', '[barge]']
-        for (const emoji of emojiLUT) {
-            for (let i=0; i < outputSections.length; i++) {
-                
-                // check that the section is not contained within '[]' really inefficient but it works
-                if (!(outputSections[i].startsWith('[') && outputSections[i].endsWith(']'))) {
+    const emojis = emojiMap.get(alias);
 
-                    // check that the text contains the alias
-                    if (outputSections[i].toLowerCase().includes(emoji[0])) {   
-                        // replace emoji aliases with ${{emojiId}}
-                        // this template will later be replaced with the actual image url
-                        // this is because the image url contains class="disc-emoji" which conflicts with a emoji alias names "sc" 
-                        let replacementString = '';
-                        for(const replacementEmoji of emoji[1]) {
-                            replacementString += '${{' + discordEmojiRegex.exec(replacementEmoji)[2] + '}} ';
-                        }
-                        replacementString.trim();
-                        outputSections[i] = outputSections[i].replace(new RegExp(emoji[0], "ig"), replacementString);
-                    }
-                }
-            }
-        }
+    if (!emojis || !emojis.length) continue;
 
-        // another pepega replace output sections containing '[text]' with 'text'
-        for (let i=0; i < outputSections.length; i++) {
-            if (outputSections[i].startsWith('[') && outputSections[i].endsWith(']')) {
-                outputSections[i] = outputSections[i].slice(1, outputSections[i].length-1);
-            }
-        }
+    const id = emojis[0].id;
 
-        // update input and output text
-        textInput.value = input;
-        clipboardText = outputSections
-            // convert sections back to string
-            .join('')
-            
-            // replace ${{emojiId}} with <img class="disc-emoji" src="https://cdn.discordapp.com/emojis/emojiId.png?v=1">
-            .replace(/\${{(\d+)}}/g, (_, emojiId) =>
-                `<img class="disc-emoji" src="https://cdn.discordapp.com/emojis/${emojiId}.png?v=1">`
-            );
+    if (seen.has(id)) continue;
 
-        pOutput.innerHTML = clipboardText
-            // replace \n with <br>
-            .replace(/\n/g, '<br>');
+    seen.add(id);
 
-        // set caret to last edited item instead of always at the end of the text area
-        // e.g. when modifying "hello bye" to "hello -> bye" the caret ends at "hello →| bye"
-        inputReversed = reverse(input);
-        originalInputReversed = reverse(originalInput);
-        for (let i=0; i < inputReversed.length; i++) {
-            if (inputReversed[i] != originalInputReversed[i]) {
-                textInput.selectionEnd = input.length - i;
-                break;
-            }
-        }
+    suggestions.push({
+      alias,
+      emoji: emojis[0],
     });
 
+    if (suggestions.length >= 10) break;
+  }
 
-    // handle copy discord button clicked
-    $('#copyDiscord').click(function() {
-        let copyResult = clipboardText;
-        
-        // very pepega way of converting images back to emojis
-        for (const emoji of emojiLUT) {
-            copyResult = copyResult.replace(new RegExp('<img class="disc-emoji" src="https://cdn.discordapp.com/emojis/' + discordEmojiRegex.exec(emoji[1])[2] + '.png.v=1">', 'g'), emoji[1]);
-        }
+  if (!suggestions.length) {
+    suggestionBox.style.display = "none";
+    return;
+  }
 
-        // copy to clipboard
-        navigator.clipboard.writeText(copyResult);
-    });
+  activeIndex = 0;
 
-     // handle copy draw.io button clicked
-     $('#copyDrawIO').click(function() {
-        let copyResult = clipboardText.replace(/class="disc-emoji"/gi, `style="width: 1.375em; height: 1.375em !important; object-fit: contain; vertical-align: middle;"`);
-        
-        // copy to clipboard
-        navigator.clipboard.writeText(copyResult);
-    });
+  renderSuggestions();
+}
 
-    // handle export to .txt button clicked
-     $('#exportToTxt').click(function() {
-        let copyResult = clipboardText;
-        
-        // very pepega way of converting images back to emojis
-        for (const emoji of emojiLUT) {
-            copyResult = copyResult.replace(new RegExp('<img class="disc-emoji" src="https://cdn.discordapp.com/emojis/' + discordEmojiRegex.exec(emoji[1])[2] + '.png.v=1">', 'g'), emoji[1]);
-        }
-         const file = new File([copyResult], 'RotationBuilderExport.txt', {
-             type: 'text/plain',
-         });
-         const link = document.createElement('a');
-         const url = URL.createObjectURL(file);
+function renderSuggestions() {
+  suggestionBox.innerHTML = "";
 
-         link.href = url;
-         link.download = file.name;
-         document.body.appendChild(link);
-         link.click();
+  suggestions.forEach((s, i) => {
+    const div = document.createElement("div");
 
-         document.body.removeChild(link);
-         window.URL.revokeObjectURL(url);
-    });
+    div.className = "suggestion" + (i === activeIndex ? " active" : "");
 
-    // handle change view button clicked
-    $('#changeView').click(function() {
-        let inputContainer = document.getElementById('inputContainer');
-        let outputContainer = document.getElementById('outputContainer');
+    div.innerHTML = `<img class="disc-emoji" src="https://cdn.discordapp.com/emojis/${s.emoji.id}.png?v=1">
+<span>${s.alias}</span>`;
 
-        if (this.innerHTML == '<i class="bi bi-view-stacked"></i> View') {
-            this.innerHTML = '<i class="bi bi-layout-split"></i> View';
-            inputContainer.className = 'col-md-12 p-3';
-            outputContainer.className = 'col-md-12 p-3';
-        }
-        else {
-            this.innerHTML = '<i class="bi bi-view-stacked"></i> View';
-            inputContainer.className = 'col-md-6 p-3';
-            outputContainer.className = 'col-md-6 p-3';
-        }
-    });
+    div.onclick = () => applySuggestion(i);
+
+    suggestionBox.appendChild(div);
+  });
+
+  const pos = getCaretPosition();
+
+  const left = Math.min(pos.x, input.clientWidth - 200);
+
+  suggestionBox.style.left = left + 32 + "px";
+  suggestionBox.style.top = pos.y + 13 + "px";
+  suggestionBox.style.display = "block";
+}
+
+function applySuggestion(i) {
+  let word = suggestions[i].alias;
+
+  if (autoArrowToggle.checked) word += " → ";
+
+  const pos = input.selectionStart;
+  const before = input.value.slice(0, pos);
+  const after = input.value.slice(pos);
+
+  const match = before.match(/[A-Za-z0-9_-]+$/);
+
+  if (!match) return;
+
+  const start = pos - match[0].length;
+
+  input.value = before.slice(0, start) + word + after;
+
+  const newPos = start + word.length;
+
+  input.setSelectionRange(newPos, newPos);
+
+  compile();
+
+  suggestionBox.style.display = "none";
+}
+
+input.addEventListener("input", () => {
+  const pos = input.selectionStart;
+  const before = input.value;
+
+  const replaced = before.replace(/->/g, "→");
+
+  if (before !== replaced) {
+    const diff = replaced.length - before.length;
+
+    input.value = replaced;
+
+    const newPos = pos + diff;
+    input.setSelectionRange(newPos, newPos);
+  }
+
+  compile();
+  updateSuggestions();
 });
+
+input.addEventListener("keydown", (e) => {
+  if (!suggestions.length) return;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    activeIndex = (activeIndex + 1) % suggestions.length;
+    renderSuggestions();
+  }
+
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    activeIndex = (activeIndex - 1 + suggestions.length) % suggestions.length;
+    renderSuggestions();
+  }
+
+  if (e.key === "Enter" || e.key === "ArrowRight" || e.key === "Tab") {
+    e.preventDefault();
+    applySuggestion(activeIndex);
+  }
+
+  if (e.key === "Escape") {
+    suggestionBox.style.display = "none";
+  }
+
+  if (e.key === " " || e.key === "Backspace") {
+    suggestionBox.style.display = "none";
+  }
+});
+
+document.getElementById("copyDiscord").onclick = () =>
+  navigator.clipboard.writeText(compiledDiscord);
+
+document.getElementById("exportToTxt").onclick = () => {
+  const file = new File([compiledDiscord], "rotation.txt");
+
+  const url = URL.createObjectURL(file);
+
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = file.name;
+  a.click();
+
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById("changeView").onclick = function () {
+  const stacked = this.dataset.stacked === "true";
+
+  if (stacked) {
+    inputContainer.className = "col-md-6 p-3";
+    outputContainer.className = "col-md-6 p-3";
+    this.dataset.stacked = "false";
+  } else {
+    inputContainer.className = "col-md-12 p-3";
+    outputContainer.className = "col-md-12 p-3";
+    this.dataset.stacked = "true";
+  }
+};
+
+function getCaretPosition() {
+  const mirror = document.getElementById("caretMirror");
+
+  const style = getComputedStyle(input);
+
+  mirror.style.font = style.font;
+  mirror.style.padding = style.padding;
+  mirror.style.width = input.clientWidth + "px";
+
+  const text = input.value.substring(0, input.selectionStart);
+
+  mirror.textContent = text;
+
+  const span = document.createElement("span");
+  span.textContent = "|";
+
+  mirror.appendChild(span);
+
+  const rect = span.getBoundingClientRect();
+  const parent = mirror.getBoundingClientRect();
+
+  return {
+    x: rect.left - parent.left,
+    y: rect.top - parent.top,
+  };
+}
+
+loadEmojis();
+compile();
