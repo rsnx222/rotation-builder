@@ -292,7 +292,11 @@ input.addEventListener("keydown", (e) => {
     renderSuggestions();
   }
 
-  if (e.key === "Enter" || e.key === "ArrowRight" || e.key === "Tab") {
+  if (
+    (e.key === "Enter" && suggestions.length) ||
+    e.key === "ArrowRight" ||
+    e.key === "Tab"
+  ) {
     e.preventDefault();
     applySuggestion(activeIndex);
   }
