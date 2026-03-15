@@ -246,6 +246,38 @@ input.addEventListener("input", () => {
 });
 
 input.addEventListener("keydown", (e) => {
+  if (e.key === " ") {
+    const pos = input.selectionStart;
+    const before = input.value.slice(0, pos);
+    const after = input.value.slice(pos);
+
+    const match = before.match(/[A-Za-z0-9_-]+$/);
+    if (!match) {
+      suggestionBox.style.display = "none";
+      return;
+    }
+
+    const typedToken = match[0];
+    const token = typedToken.toLowerCase();
+
+    if (autoArrowToggle.checked && emojiMap.has(token)) {
+      e.preventDefault();
+
+      const start = pos - typedToken.length;
+      input.value = before.slice(0, start) + typedToken + " → " + after;
+
+      const newPos = start + typedToken.length + 3;
+      input.setSelectionRange(newPos, newPos);
+
+      compile();
+      suggestionBox.style.display = "none";
+      return;
+    }
+
+    suggestionBox.style.display = "none";
+    return;
+  }
+
   if (!suggestions.length) return;
 
   if (e.key === "ArrowDown") {
@@ -269,7 +301,7 @@ input.addEventListener("keydown", (e) => {
     suggestionBox.style.display = "none";
   }
 
-  if (e.key === " " || e.key === "Backspace") {
+  if (e.key === "Backspace") {
     suggestionBox.style.display = "none";
   }
 });
