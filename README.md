@@ -1,4 +1,5 @@
 # Rotation Builder
 
-![Image](https://i.imgur.com/CrpJ3VT.png)
+[pvme.io/rotation-builder](https://pvme.io/rotation-builder/)
 
+![Image](readme-video.mp4)
